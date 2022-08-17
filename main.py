@@ -36,6 +36,14 @@ class Flight:
         Raises:
             ValueError: If the seat is unavailable.
         """
+        row, letter = self._parse_seat(seat)
+
+        if self._seating[row][letter] is not None:
+            raise ValueError("Seat {} already occupied".format(seat))
+
+        self._seating[row][letter] = passenger
+
+    def _parse_seat(self, seat):
         rows, seat_letters = self._aircraft.seating_plan()
 
         letter = seat[-1]
@@ -50,11 +58,28 @@ class Flight:
 
         if row not in rows:
             raise ValueError("Invalid row number {}".format(row))
+        
+        return row, letter
 
-        if self._seating[row][letter] is not None:
-            raise ValueError("Seat {} already occupied".format(seat))
+    def relocate_passenger(self, from_seat, to_seat):
+        """Relocate a passenger to a different seat.
 
-        self._seating[row][letter] = passenger
+        Args:
+            from_seat: The existing seat designator for the passenger to be moved.
+
+            to_seat: The new seat designator.
+        """
+        from_row, from_letter = self._parse_seat(from_seat)
+        if self._seating[from_row][from_letter] is None:
+            raise ValueError("No passenger to relocate in seat {}".format(from_seat))
+
+        to_row, to_letter = self._parse_seat(to_seat)
+        if self._seating[to_row][to_letter] is not None:
+            raise ValueError("Seat {} already occupied".format(to_seat))
+
+        self._seating[to_row][to_letter] = self._seating[from_row][from_letter]
+        self._seating[from_row][from_letter] = None
+
 
 
 class Aircraft:
@@ -73,6 +98,15 @@ class Aircraft:
     def seating_plan(self):
         return (range(1, self._num_rows + 1),
                 "ABCDEFGHJK"[:self._num_seats_per_row])
+        
+def make_flight():
+    f = Flight("BA758", Aircraft("G-EUPT", "Airbus A319", num_rows=22, num_seats_per_row=6))
+    f.allocate_seat("12A", "Guido van Rossum")
+    f.allocate_seat("15F", "Bjarne Stroustrup")
+    f.allocate_seat("15E", "Anders Hejlsberg")
+    f.allocate_seat("1C", "John McCarthy")
+    f.allocate_seat("1D", "Richard Hickey")
+    return f
     
 
 
